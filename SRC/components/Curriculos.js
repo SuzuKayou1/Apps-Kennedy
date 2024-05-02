@@ -1,230 +1,217 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, Alert } from 'react-native';
-import * as SQLite from 'expo-sqlite';
-import * as FileSystem from 'expo-file-system';
+import { View, FlatList, Text, StyleSheet, Share, Alert, TouchableOpacity } from 'react-native';
 import * as MediaLibrary from 'expo-media-library';
-import { excluirPdfCurriculo, buscarPdfCurriculos, inserirPdfCurriculo } from './curriculosdb';
-import { db } from './curriculosdb';
+import { WebView } from 'react-native-webview';
+import * as FileSystem from 'expo-file-system';
+import curriculosDB from './curriculosdb';
+import * as Animatable from 'react-native-animatable';
+import { Entypo } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native'; // Importando o hook useFocusEffect
 
-const PAGE_SIZE = 10; // Número de PDFs carregados por página
+export default function ListaCurriculos({ navigation }) {
+  const [curriculos, setCurriculos] = useState([]);
+  const [htmlPdf, setHtmlPdf] = useState('');
 
-export default function ListaPDFs() {
-  const [pdfs, setPdfs] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1); // Número da página atual
-  const [totalPages, setTotalPages] = useState(0); // Total de páginas disponíveis
-
-  useEffect(() => {
-    // Solicitar permissão ao montar o componente
-    solicitarPermissao();
-
-    // Buscar PDFs ao montar o componente
-    buscarPdfCurriculos();
-  }, []);
-
-  // Função para solicitar permissão de armazenamento
   const solicitarPermissao = async () => {
     try {
-      if (Platform.OS === 'android' || Platform.OS === 'ios') {
-        const { status } = await MediaLibrary.requestPermissionsAsync();
-        if (status !== 'granted') {
-          console.log('Permissão negada para acessar a galeria de mídia e os arquivos.');
-        }
+      const { status } = await MediaLibrary.requestPermissionsAsync();
+      if (status !== 'granted') {
+        console.log('Permissão negada para acessar a galeria de mídia e os arquivos.');
       }
     } catch (error) {
       console.error('Erro ao solicitar permissão:', error);
     }
   };
 
-  // Função para buscar os PDFs do banco de dados SQLite
-  const buscarPdfCurriculos = async () => {
-    const db = SQLite.openDatabase('curriculos.db');
-    const offset = (page - 1) * PAGE_SIZE;
-    const query = `SELECT * FROM pdfCurriculos ORDER BY id DESC LIMIT ${PAGE_SIZE} OFFSET ${offset}`;
+  const carregarCurriculos = () => {
+    curriculosDB.buscarPdfCurriculos((data) => {
+      setCurriculos(data);
+    });
+  };
 
-    setLoading(true);
+  const visualizarCurriculo = (htmlPdf) => {
+    setHtmlPdf(htmlPdf);
+  };
 
+  const voltarParaLista = () => {
+    setHtmlPdf('');
+  };
+
+  const sharePDF = async (pdfFilename, htmlPdf) => {
     try {
-      const { rows } = await new Promise((resolve, reject) => {
-        db.transaction(tx => {
-          tx.executeSql(
-            query,
-            [],
-            (_, result) => resolve(result),
-            (_, error) => reject(error)
-          );
-        });
-      });
-
-      const data = rows._array;
-
-      if (data.length > 0) {
-        setPdfs(data);
-      }
-
-      setLoading(false);
+      const uri = `${FileSystem.cacheDirectory}${pdfFilename}`;
+      await FileSystem.writeAsStringAsync(uri, htmlPdf);
+      await Share.share({ url: uri, title: 'Compartilhar PDF' });
     } catch (error) {
-      console.error('Erro ao buscar PDFs: ', error);
-      setLoading(false);
+      console.error('Erro ao compartilhar PDF:', error);
     }
   };
 
-  // Função para carregar mais PDFs quando o usuário rolar até o final da lista
-  const handleLoadMore = () => {
-    if (page < totalPages && !loading) {
-      setPage(prevPage => prevPage + 1);
-    }
+  const confirmarExclusao = (pdfId) => {
+    Alert.alert(
+      'Confirmar Exclusão',
+      'Deseja excluir este PDF?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        { text: 'Excluir', onPress: () => excluirCurriculo(pdfId) },
+      ],
+      { cancelable: false }
+    );
   };
 
-  // Função para excluir o PDF
-  const excluirPDF = async (pdfId) => {
-    try {
-      // Excluir PDF do banco de dados
-      await excluirPdfCurriculo(pdfId);
-
-      // Atualizar a lista de PDFs após a exclusão
-      const newPdfs = pdfs.filter(pdf => pdf.id !== pdfId);
-      setPdfs(newPdfs);
-
-      // Informar ao usuário que o PDF foi excluído com sucesso
-      Alert.alert('Sucesso', 'PDF excluído com sucesso!');
-    } catch (error) {
-      console.error('Erro ao excluir PDF: ', error);
-    }
+  const excluirCurriculo = (pdfId) => {
+    curriculosDB.excluirPdfCurriculo(pdfId);
+    carregarCurriculos();
   };
 
-  // Função para abrir o PDF
-  const abrirPDF = async (pdfData) => {
-    try {
-      // Verificar se pdfData é uma string válida
-      if (typeof pdfData !== 'string') {
-        console.error('Dados do PDF inválidos');
-        return;
-      }
-
-      // Solicitar permissão do usuário antes de abrir o arquivo
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permissão necessária',
-          'Por favor, conceda permissão para acessar seus arquivos de mídia e PDFs.',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-          { cancelable: false }
-        );
-        return;
-      }
-
-      const pdfUri = `${FileSystem.cacheDirectory}curriculo_${Date.now()}.pdf`;
-      await FileSystem.writeAsStringAsync(pdfUri, pdfData, { encoding: FileSystem.EncodingType.Base64 });
-      await MediaLibrary.saveToLibraryAsync(pdfUri);
-    } catch (error) {
-      console.error('Erro ao abrir PDF: ', error);
-    }
+  const atualizarLista = () => {
+    carregarCurriculos();
   };
 
-  // Função para compartilhar o PDF
-  const handleSharePDF = async (pdfData) => {
-    try {
-      // Verificar se pdfData é uma string válida
-      if (typeof pdfData !== 'string') {
-        console.error('Dados do PDF inválidos');
-        return;
-      }
+  // Atualizando a lista de currículos sempre que a tela é exibida
+  useFocusEffect(
+    React.useCallback(() => {
+      solicitarPermissao();
+      carregarCurriculos();
+    }, [])
+  );
 
-      // Solicitar permissão do usuário antes de compartilhar o arquivo
-      const { status } = await MediaLibrary.requestPermissionsAsync();
-      if (status !== 'granted') {
-        Alert.alert(
-          'Permissão necessária',
-          'Por favor, conceda permissão para acessar seus arquivos de mídia e PDFs.',
-          [{ text: 'OK', onPress: () => console.log('OK Pressed') }],
-          { cancelable: false }
-        );
-        return;
-      }
-
-      // Gera o PDF
-      const pdfUri = `${FileSystem.cacheDirectory}curriculo_${Date.now()}.pdf`;
-      await FileSystem.writeAsStringAsync(pdfUri, pdfData, { encoding: FileSystem.EncodingType.Base64 });
-      
-      // Compartilha o PDF
-      await MediaLibrary.shareAsync(pdfUri);
-    } catch (error) {
-      console.error('Erro ao compartilhar PDF: ', error);
-    }
-  };
-
-  // Função para atualizar a lista de PDFs
-  const atualizarListaPDFs = () => {
-    setPage(1);
-    buscarPdfCurriculos();
-  };
-
-  // Renderizar cada item da lista
   const renderItem = ({ item }) => (
-    <TouchableOpacity onPress={() => abrirPDF(item.pdfData)}>
-      <View style={styles.itemContainer}>
-        <Text>{item.pdfFilename}</Text>
-        <TouchableOpacity onPress={() => excluirPDF(item.id)}>
-          <Text style={styles.excluirButton}>Excluir</Text>
+    <View style={styles.item}>
+      <Text style={styles.pdfFilename}>{item.pdfFilename}</Text>
+      <View style={styles.buttonPdf}>
+        <TouchableOpacity style={styles.buttonPdf1} onPress={() => visualizarCurriculo(item.htmlPdf)}>
+          <Entypo name="eye" size={24} color="#FFFFFF" />
         </TouchableOpacity>
-        <TouchableOpacity onPress={() => handleSharePDF(item.pdfData)}>
-          <Text style={styles.exportarButton}>Exportar</Text>
+        <TouchableOpacity style={styles.buttonPdf2} onPress={() => sharePDF(item.pdfFilename, item.htmlPdf)}>
+          <Entypo name="share" size={24} color="#FFFFFF" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.buttonPdf3} onPress={() => confirmarExclusao(item.id)}>
+          <Entypo name="trash" size={24} color="#FFFFFF" />
         </TouchableOpacity>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 
   return (
-    <View style={{ marginTop: 100, alignItems: 'center' }}> 
-      <Text style={styles.text1}>Curriculos</Text>
-     
-      <FlatList 
-        data={pdfs}
-        renderItem={renderItem}
-        keyExtractor={(item, index) => `${item.id}_${index}`} // Adicionando uma chave única
-        onEndReached={handleLoadMore}
-        onEndReachedThreshold={0.1}
-        ListFooterComponent={loading && <ActivityIndicator />}
-      />
-
-<TouchableOpacity onPress={atualizarListaPDFs}>
-        <Text style={styles.atualizarButton}>Atualizar</Text>
-      </TouchableOpacity>
+    <View style={styles.container}>
+      <Animatable.Text 
+        style={styles.title}
+        animation="fadeInDown"
+        duration={1500}
+      >Currículos</Animatable.Text>
+      {htmlPdf ? (
+        <>
+          <WebView
+            originWhitelist={['*']}
+            source={{ html: htmlPdf }}
+            style={{ flex: 1 }}
+          />
+          <TouchableOpacity style={styles.voltar} onPress={voltarParaLista}>
+            <Entypo name="controller-fast-backward" size={24} color="black" />
+          </TouchableOpacity>
+        </>
+      ) : (
+        <>
+          <Animatable.View 
+            style={styles.listContainer}
+            animation="fadeInUp"
+            duration={1500}
+          >
+            <FlatList
+              data={curriculos}
+              renderItem={renderItem}
+              keyExtractor={(item) => item.id.toString()}
+            />
+          </Animatable.View>
+          <TouchableOpacity onPress={atualizarLista} style={styles.button}>
+            <Text style={styles.buttonText}>Atualizar Lista</Text>
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  text1:{
-    marginBottom: 20,
-    fontSize: 40,
-    fontWeight: 'bold'
-
+  container: {
+    backgroundColor: '#FFFF',
+    flex: 1,
   },
-  itemContainer: {
+  item: {
+    marginBottom: 30,
+  },
+  title: {
+    fontSize: 43,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 80
+  },
+  pdfFilename: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 5,
+    textAlign: 'center', 
+  },
+  listContainer: {
+    flex: 1,
+    marginTop: 50,
+    marginBottom: 60,
+  },
+  buttonPdf: {
+    marginTop: 5,
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
+    justifyContent: 'center',
   },
-  excluirButton: {
-    marginLeft: 20,
-    color: 'red',
-    fontWeight: 'bold',
+  buttonPdf1: {
+    borderRadius: 20,
+    padding: 3,
+    marginTop: 5,
+    marginRight: 5,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: '#0495d4',
   },
-  exportarButton: {
-    marginLeft: 20,
-    color: 'green',
-    fontWeight: 'bold',
+  buttonPdf2: {
+    borderRadius: 20,
+    padding: 3,
+    marginTop: 5,
+    marginRight: 5,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: '#00b02f',
   },
-  atualizarButton: {
-    marginTop: 30,
-    marginBottom: 10,
+  buttonPdf3: {
+    borderRadius: 20,
+    padding: 3,
+    marginTop: 5,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    backgroundColor: '#b00000',
+  },
+  button: {
+    marginBottom: 20,
+    position: 'absolute',
+    bottom: 20,
+    left: 50,
+    right: 50,
+    backgroundColor: '#0396EB',
+    borderRadius: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+  },
+  buttonText: {
+    color: '#FFFFFF',
     fontSize: 16,
-    color: 'blue',
     fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  voltar: {
+    position: 'absolute',
+    bottom: 20,
+    left: 20,
   },
 });

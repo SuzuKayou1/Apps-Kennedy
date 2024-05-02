@@ -13,15 +13,18 @@ import {
 } from 'react-native';
 import * as SQLite from 'expo-sqlite';
 import { obterPermissaoMediaLibrary } from './ObterPermissao'; // Importe a função de solicitação de permissão
+import * as Animatable from 'react-native-animatable';
 
 const KeyboardAvoidingComponent = (props) => {
   const [nome, setNome] = useState("");
-  const [objetivo, setObjetivo] = useState("");
-  const [habilidades, setHabilidades] = useState("");
+  const [resumo, setResumo] = useState("");
+  const [contato, setContato] = useState("");
   const [formacao, setFormacao] = useState("");
-  const [cursos, setCursos] = useState("");
+  const [skills, setSkills] = useState("");
   const [idiomas, setIdiomas] = useState("");
   const [experiencia, setExperiencia] = useState("");
+  const [certificacoes, setCertificacoes] = useState("");
+  const [softSkills, setSoftSkills] = useState("");
 
   useEffect(() => {
     // Solicita permissão ao montar o componente
@@ -33,25 +36,37 @@ const KeyboardAvoidingComponent = (props) => {
       <KeyboardAvoidingView style={styles.container}>
         <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
           <View style={styles.inner}>
-            <Text style={styles.header}>Insira seus dados:</Text>
-            <TextInput placeholder="Nome" style={styles.textInput} keyboardType='default' value={nome} onChangeText={setNome} />
-            <TextInput placeholder="Objetivos" style={styles.textInput} keyboardType='default' value={objetivo} onChangeText={setObjetivo} />
-            <TextInput placeholder="Habilidades e Competências" style={styles.textInput} keyboardType='default' value={habilidades} onChangeText={setHabilidades} multiline />
+          <Animatable.Text
+ style={styles.header}
+animation="fadeInDown"
+              duration={1500}
+>Insira seus dados:</Animatable.Text>
+<Animatable.View
+animation="fadeInUp"
+duration={1500}>
+            <TextInput placeholder="Nome Completo" style={styles.textInput} keyboardType='default' value={nome} onChangeText={setNome} />
+            <TextInput placeholder="Resumo - Ex: Idade, Profissao, Objetivos, etc" style={styles.textInput} keyboardType='default' value={resumo} onChangeText={setResumo} />
+            <TextInput placeholder="Contato - Ex: Email, Celular/Wpp, Linkedin" style={styles.textInput} keyboardType='default' value={contato} onChangeText={setContato} multiline />
+            <TextInput placeholder="Skills Relevantes - Ex: Linguagens, Areas de Especializacao" style={styles.textInput} keyboardType='default' value={skills} onChangeText={setSkills} multiline />
             <TextInput placeholder="Formação" style={styles.textInput} keyboardType='default' value={formacao} onChangeText={setFormacao} />
-            <TextInput placeholder="Cursos" style={styles.textInput} keyboardType='default' value={cursos} onChangeText={setCursos} multiline />
             <TextInput placeholder="Idiomas" style={styles.textInput} keyboardType='default' value={idiomas} onChangeText={setIdiomas} multiline />
             <TextInput placeholder="Experiências" style={styles.textInput} keyboardType='default' value={experiencia} onChangeText={setExperiencia} multiline />
+            <TextInput placeholder="Certificações" style={styles.textInput} keyboardType='default' value={certificacoes} onChangeText={setCertificacoes} multiline />
+            <TextInput placeholder="Soft Skills" style={styles.textInput} keyboardType='default' value={softSkills} onChangeText={setSoftSkills} multiline />
             <View style={styles.btnContainer}>
               <Button title="Salvar" onPress={() => props.navigation.navigate('TelaPreview', {
                 nome: nome,
-                objetivo: objetivo,
-                habilidades: habilidades,
+                resumo: resumo,
+                contato: contato,
                 formacao: formacao,
-                cursos: cursos,
+                skills: skills,
                 idiomas: idiomas,
-                experiencia: experiencia
+                experiencia: experiencia,
+                certificacoes: certificacoes,
+                softSkills: softSkills,
               })} />
             </View>
+            </Animatable.View>
           </View>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -63,7 +78,7 @@ const styles = StyleSheet.create({
   container: {
     marginTop: 30,
     flex: 1,
-    backgroundColor: '#f3edf6',
+    backgroundColor: '#F2EFF2',
     
   },
   

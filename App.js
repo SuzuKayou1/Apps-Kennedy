@@ -12,8 +12,8 @@ import { useState } from 'react';
 import { Entypo } from '@expo/vector-icons';
 import { Splash } from './SRC/components/splash';
 import * as SQLite from 'expo-sqlite';
-
-
+import curriculosDB from './SRC/components/curriculosdb';
+import ButtonNew from './SRC/constants/ButtonNew';
 const Tab = createBottomTabNavigator();
 
 
@@ -57,28 +57,30 @@ function TabNavigator(){
       headerShown: false,
       tabBarLabel: 'Home',
       tabBarItemStyle: {paddingBottom: 40, paddingTop: 10},
-      tabBarActiveBackgroundColor: '#58d8e3',
-      tabBarInactiveBackgroundColor: '#58d8e3',
-      tabBarInactiveTintColor: 'white',
-      tabBarActiveTintColor: 'white',
+      tabBarActiveBackgroundColor: '#ECF5FA',
+      tabBarInactiveBackgroundColor: '#ECF5FA',
+    
       tabBarStyle: { height: 100, alignItems: 'center',  borderTopWidth: 0, paddingBottom: 0},
       tabBarIcon: ({ color }) => (
         <MaterialCommunityIcons name="home" color={color} size={26}/>
+        
       ),
+      tabBarItemStyle: { paddingBottom: 10, paddingTop: 10 },
+     
     }}
     />
     <Tab.Screen name="Novo Curriculo" 
     component={TelaCurriculo} 
     
       options={{
+        tabBarLabel: '',
         headerShown: false,
-        tabBarItemStyle: { paddingTop: 10, paddingBottom: 40},
-        tabBarActiveBackgroundColor: 'white',
-        tabBarInactiveBackgroundColor: 'white',
-        tabBarStyle: { height: 100, alignItems: 'center', paddingBottom: 0},
-      tabBarLabel: 'Novo Curriculo',
-      tabBarIcon: ({ color }) => (
-        <Entypo name="plus" color={color} size={26}/>
+        tabBarActiveBackgroundColor: '#F2EFF2',
+        tabBarInactiveBackgroundColor: '#F2EFF2',
+        tabBarStyle: { height: 100, alignItems: 'center', paddingBottom: 0, borderTopWidth: 0},
+      tabBarIcon: ({ focused, size, color }) => (
+
+       <ButtonNew size={size} color={color} focused={focused}/>
    
       )
     }}
@@ -90,16 +92,14 @@ function TabNavigator(){
       options={{
         headerShown: false,
         tabBarItemStyle: { paddingTop: 10, paddingBottom: 40},
-        tabBarActiveBackgroundColor: 'white',
-        tabBarInactiveBackgroundColor: 'white',
-        tabBarStyle: { height: 100, alignItems: 'center', paddingBottom: 0},
+        tabBarActiveBackgroundColor: '#FFFF',
+        tabBarInactiveBackgroundColor: '#FFFF',
+        tabBarStyle: { height: 100, alignItems: 'center', paddingBottom: 0, borderTopWidth: 0},
       tabBarLabel: 'Curriculos',
       tabBarIcon: ({ color }) => (
         <MaterialCommunityIcons name="folder-table-outline" size={26} color={color} />
-
-        
-   
-      )
+      ),
+      tabBarItemStyle: { paddingBottom: 10, paddingTop: 10 }
     }}
     />
    </Tab.Navigator>
@@ -110,7 +110,9 @@ function TabNavigator(){
 function StackScreen(){
   return (
     <Stack.Navigator screenOptions={{headerShown: false}}>
-    <Stack.Screen name='TelaHome' component={TelaHome} options={{ title: 'Home' }}/>
+       <Stack.Screen name='TelaHome' component={TelaHome} options={{ title: 'Home' }}/>
+      <Stack.Screen name="ListaCurriculos" component={ListaCurriculos} />
+   
     <Stack.Screen name='TelaCurriculo' component={TelaCurriculo} options={{ title: 'Criação' }}/>
     <Stack.Screen name='TelaPreview' component={TelaPreview} options={{ title: 'Preview' }}/>
   </Stack.Navigator>
@@ -121,7 +123,7 @@ function StackScreen(){
 
 export default function App() {
   const [splashComplete, setSplashComplete] = useState(false);
-   
+
   return ( 
     splashComplete
     ?

@@ -1,26 +1,21 @@
 import React from 'react';
 import { StyleSheet, ScrollView, Text, Button, View } from 'react-native';
-import { inserirPdfCurriculo } from './curriculosdb'; 
+import curriculosDB from './curriculosdb';
 import { generatePDF, sharePDF } from './PDFUtils';
-import * as MediaLibrary from 'expo-media-library';
-import * as FileSystem from 'expo-file-system';
-import * as SQLite from 'expo-sqlite';
-
-const db = SQLite.openDatabase('curriculos.db');
-
-// Funções para contar linhas e retornar uma linha específica do texto
-function contarLinhas(texto) {
-    let linhas = texto.split(/\r\n|\r|\n/)
-    return linhas.length
-}
-
-function Linhas(texto, indice) {
-    let linhas = texto.split(/\r\n|\r|\n/)
-    return linhas[indice]
-}
 
 export default function Preview(props) {
-    const { nome, objetivo, habilidades, formacao, cursos, idiomas, experiencia } = props.route.params;
+    const { nome, resumo, contato, formacao, skills, idiomas, experiencia, certificacoes, softSkills } = props.route.params;
+
+    // Funções para contar linhas e retornar uma linha específica do texto
+    function contarLinhas(texto) {
+        let linhas = texto.split(/\r\n|\r|\n/)
+        return linhas.length
+    }
+
+    function Linhas(texto, indice) {
+        let linhas = texto.split(/\r\n|\r|\n/)
+        return linhas[indice]
+    }
 
     // HTML do currículo
     const html = `<!DOCTYPE html>
@@ -33,7 +28,7 @@ export default function Preview(props) {
           font-family: Arial, sans-serif;
           text-align: center;
           padding-top: 10%;
-          padding-bottom: 10%; 
+          padding-bottom: 10%;
       }
 
       .container {
@@ -41,18 +36,18 @@ export default function Preview(props) {
           margin: auto;
           text-align: left;
           background-color: #f2f2f2;
-          padding: 20px; 
-          border: 1px solid #ccc; 
+          padding: 20px;
+          border: 1px solid #ccc;
       }
-  
+
       h1 {
           font-size: 24px;
       }
-  
+
       h2 {
           font-size: 18px;
       }
-  
+
       ul, ol {
           list-style: none;
           padding-left: 0;
@@ -68,17 +63,17 @@ export default function Preview(props) {
           <div class="container">
               <h1 id="nome">${nome}</h1>
               <hr>
-              <h2>Objetivo</h2>
-              <p>${objetivo}</p>
+              <h2>Resumo</h2>
+              <p>${resumo}</p>
               <hr>
-              <h2>Habilidades e Competências</h2>
+              <h2>Contato</h2>
               <ul>
-                  <li>${Linhas(habilidades, 0)}</li>
-                  ${contarLinhas(habilidades) == 2 ?
-                    '<li>' + Linhas(habilidades, 1) + '</li>' : contarLinhas(habilidades) == 3 ?
-                    '<li>' + Linhas(habilidades, 1) + '</li>' + '<li>' + Linhas(habilidades, 2) + '</li>': contarLinhas(habilidades) == 4 ?
-                    '<li>' + Linhas(habilidades, 1) + '</li>' + '<li>' + Linhas(habilidades, 2) + '</li>' + '<li>' + Linhas(habilidades, 3) + '</li>': contarLinhas(habilidades) == 5 ?
-                    '<li>' + Linhas(habilidades, 1) + '</li>' + '<li>' + Linhas(habilidades, 2) + '</li>' + '<li>' + Linhas(habilidades, 3) + '</li>' + Linhas(habilidades, 4) + '</li>': ''}
+                  <li>${Linhas(contato, 0)}</li>
+                  ${contarLinhas(contato) == 2 ?
+                    '<li>' + Linhas(contato, 1) + '</li>' : contarLinhas(contato) == 3 ?
+                    '<li>' + Linhas(contato, 1) + '</li>' + '<li>' + Linhas(contato, 2) + '</li>': contarLinhas(contato) == 4 ?
+                    '<li>' + Linhas(contato, 1) + '</li>' + '<li>' + Linhas(contato, 2) + '</li>' + '<li>' + Linhas(contato, 3) + '</li>': contarLinhas(contato) == 5 ?
+                    '<li>' + Linhas(contato, 1) + '</li>' + '<li>' + Linhas(contato, 2) + '</li>' + '<li>' + Linhas(contato, 3) + '</li>' + Linhas(contato, 4) + '</li>': ''}
               </ul>
               <hr>
               <h2>Formação</h2>
@@ -86,14 +81,14 @@ export default function Preview(props) {
                   <li>${formacao}</li>
               </ul>
               <hr>
-              <h2>Cursos</h2>
+              <h2>Skills</h2>
               <ul>
-                  <li>${cursos}</li>
-                  ${contarLinhas(cursos) == 2 ?
-                    '<li>' + Linhas(cursos, 1) + '</li>' : contarLinhas(cursos) == 3 ?
-                    '<li>' + Linhas(cursos, 1) + '</li>' + '<li>' + Linhas(cursos, 2) + '</li>': contarLinhas(cursos) == 4 ?
-                    '<li>' + Linhas(cursos, 1) + '</li>' + '<li>' + Linhas(cursos, 2) + '</li>' + '<li>' + Linhas(cursos, 3) + '</li>': contarLinhas(cursos) == 5 ?
-                    '<li>' + Linhas(cursos, 1) + '</li>' + '<li>' + Linhas(cursos, 2) + '</li>' + '<li>' + Linhas(cursos, 3) + '</li>' + Linhas(cursos, 4) + '</li>': ''}
+                  <li>${skills}</li>
+                  ${contarLinhas(skills) == 2 ?
+                    '<li>' + Linhas(skills, 1) + '</li>' : contarLinhas(skills) == 3 ?
+                    '<li>' + Linhas(skills, 1) + '</li>' + '<li>' + Linhas(skills, 2) + '</li>': contarLinhas(skills) == 4 ?
+                    '<li>' + Linhas(skills, 1) + '</li>' + '<li>' + Linhas(skills, 2) + '</li>' + '<li>' + Linhas(skills, 3) + '</li>': contarLinhas(skills) == 5 ?
+                    '<li>' + Linhas(skills, 1) + '</li>' + '<li>' + Linhas(skills, 2) + '</li>' + '<li>' + Linhas(skills, 3) + '</li>' + Linhas(skills, 4) + '</li>': ''}
               </ul>
               <hr>
               <h2>Idiomas</h2>
@@ -115,8 +110,28 @@ export default function Preview(props) {
                     '<li>' + Linhas(experiencia, 1) + '</li>' + '<li>' + Linhas(experiencia, 2) + '</li>' + '<li>' + Linhas(experiencia, 3) + '</li>': contarLinhas(experiencia) == 5 ?
                     '<li>' + Linhas(experiencia, 1) + '</li>' + '<li>' + Linhas(experiencia, 2) + '</li>' + '<li>' + Linhas(experiencia, 3) + '</li>' + Linhas(experiencia, 4) + '</li>': ''}
               </ul>
-              </div>
-              </body>
+              <hr>
+              <h2>Certificações</h2>
+              <ul>
+                  <li>${certificacoes}</li>
+                  ${contarLinhas(certificacoes) == 2 ?
+                    '<li>' + Linhas(certificacoes, 1) + '</li>' : contarLinhas(certificacoes) == 3 ?
+                    '<li>' + Linhas(certificacoes, 1) + '</li>' + '<li>' + Linhas(certificacoes, 2) + '</li>': contarLinhas(certificacoes) == 4 ?
+                    '<li>' + Linhas(certificacoes, 1) + '</li>' + '<li>' + Linhas(certificacoes, 2) + '</li>' + '<li>' + Linhas(certificacoes, 3) + '</li>': contarLinhas(certificacoes) == 5 ?
+                    '<li>' + Linhas(certificacoes, 1) + '</li>' + '<li>' + Linhas(certificacoes, 2) + '</li>' + '<li>' + Linhas(certificacoes, 3) + '</li>' + Linhas(certificacoes, 4) + '</li>': ''}
+              </ul>
+              <hr>
+              <h2>Soft Skills</h2>
+              <ul>
+                  <li>${softSkills}</li>
+                  ${contarLinhas(softSkills) == 2 ?
+                    '<li>' + Linhas(softSkills, 1) + '</li>' : contarLinhas(softSkills) == 3 ?
+                    '<li>' + Linhas(softSkills, 1) + '</li>' + '<li>' + Linhas(softSkills, 2) + '</li>': contarLinhas(softSkills) == 4 ?
+                    '<li>' + Linhas(softSkills, 1) + '</li>' + '<li>' + Linhas(softSkills, 2) + '</li>' + '<li>' + Linhas(softSkills, 3) + '</li>': contarLinhas(softSkills) == 5 ?
+                    '<li>' + Linhas(softSkills, 1) + '</li>' + '<li>' + Linhas(softSkills, 2) + '</li>' + '<li>' + Linhas(softSkills, 3) + '</li>' + Linhas(softSkills, 4) + '</li>': ''}
+              </ul>
+          </div>
+      </body>
     </html>`;
 
     async function handleSharePDF() {
@@ -128,7 +143,7 @@ export default function Preview(props) {
             const nomeArquivo = `${nome}_${Math.floor(Math.random() * 1000)}.pdf`;
 
             // Salva o nome do arquivo no banco de dados SQLite
-            inserirPdfCurriculo(nomeArquivo);
+            curriculosDB.inserirPdfCurriculo(nomeArquivo, html);
 
             // Compartilha o PDF
             await sharePDF(file.uri);
@@ -139,23 +154,23 @@ export default function Preview(props) {
 
     return (
         <ScrollView style={styles.container}>
-            <Text style={styles.title}>{nome}</Text>
+            <Text style={styles.header}>{nome}</Text>
             <Text style={styles.hr} />
-            <Text style={styles.topicos}>Objetivos</Text>
+            <Text style={styles.topicos}>Resumo</Text>
             <Text style={styles.hr} />
-            <Text style={styles.paragraph}>{objetivo}</Text>
+            <Text style={styles.paragraph}>{resumo}</Text>
             <Text style={styles.hr} />
-            <Text style={styles.topicos}>Habilidades</Text>
+            <Text style={styles.topicos}>Contato</Text>
             <Text style={styles.hr} />
-            <Text style={styles.paragraph}>{habilidades}</Text>
+            <Text style={styles.paragraph}>{contato}</Text>
             <Text style={styles.hr} />
             <Text style={styles.topicos}>Formação</Text>
             <Text style={styles.hr} />
             <Text style={styles.paragraph}>{formacao}</Text>
             <Text style={styles.hr} />
-            <Text style={styles.topicos}>Cursos</Text>
+            <Text style={styles.topicos}>Skills</Text>
             <Text style={styles.hr} />
-            <Text style={styles.paragraph}>{cursos}</Text>
+            <Text style={styles.paragraph}>{skills}</Text>
             <Text style={styles.hr} />
             <Text style={styles.topicos}>Idiomas</Text>
             <Text style={styles.hr} />
@@ -164,6 +179,14 @@ export default function Preview(props) {
             <Text style={styles.topicos}>Experiências</Text>
             <Text style={styles.hr} />
             <Text style={styles.paragraph}>{experiencia}</Text>
+            <Text style={styles.hr} />
+            <Text style={styles.topicos}>Certificações</Text>
+            <Text style={styles.hr} />
+            <Text style={styles.paragraph}>{certificacoes}</Text>
+            <Text style={styles.hr} />
+            <Text style={styles.topicos}>Soft Skills</Text>
+            <Text style={styles.hr} />
+            <Text style={styles.paragraph}>{softSkills}</Text>
             <View style={styles.button}>
                 <Button title='Salvar' onPress={handleSharePDF} />
             </View>
@@ -173,13 +196,22 @@ export default function Preview(props) {
 
 const styles = StyleSheet.create({
     container: {
-        marginTop: 50,
+        
         flexGrow: 1,
         backgroundColor: '#FFF',
         width: '100%',
     },
+    header:{
+        marginTop: 60,
+        margin: 30,
+        fontSize: 30,
+        fontWeight: 'bold',
+        fontFamily: 'Arial',
+        textAlign: 'center'
+
+    },
     title: {
-        margin: 24,
+        margin: 30,
         fontSize: 30,
         fontWeight: 'bold',
         fontFamily: 'Arial',
